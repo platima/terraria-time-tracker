@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Terraria Time Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { padding: 20px; }
+        label, input, select { display: block; margin-bottom: 10px; }
+        #output { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <label for="startHour">Start Hour (0-23):</label>
+        <input type="number" id="startHour" min="0" max="23">
+
+        <label for="startMinute">Start Minute (0-59):</label>
+        <input type="number" id="startMinute" min="0" max="59">
+
+        <label for="moonPhase">Starting Moon Phase:</label>
+        <select id="moonPhase">
+            <option value="0">New Moon</option>
+            <option value="1">Waxing Crescent</option>
+            <option value="2">First Quarter</option>
+            <option value="3">Waxing Gibbous</option>
+            <option value="4">Full Moon</option>
+            <option value="5">Waning Gibbous</option>
+            <option value="6">Last Quarter</option>
+            <option value="7">Waning Crescent</option>
+        </select>
+
+        <button onclick="startTracking()">Start Tracking</button>
+
+        <div id="output"></div>
+    </div>
+
+    <script>
+        let startHour, startMinute, startTime;
+        let moonPhases = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
+        let currentMoonPhaseIndex;
+        let previousInGameDay;
+
+        function startTracking() {
+            startHour = parseInt(document.getElementById("startHour").value);
+            startMinute = parseInt(document.getElementById("startMinute").value);
+            currentMoonPhaseIndex = parseInt(document.getElementById("moonPhase").value);
+
+            if (isNaN(startHour) || startHour < 0 || startHour > 23 ||
+                isNaN(startMinute) || startMinute < 0 || startMinute > 59) {
+                alert("Please enter valid hour (0-23) and minute (0-59).");
+                return;
+            }
+
+            startTime = new Date();
+            previousInGameDay = null;
+
+            updateDateTime(); // Update immediately
+            setInterval(updateDateTime, 1000); // Then update every real-time second
+        }
+
+        function updateDateTime() {
+            let currentTime = new Date();
+            let elapsedTime = currentTime - startTime; // Elapsed real time in milliseconds
+            let acceleratedTimeInMinutes = (elapsedTime / 1000 / 60) * 60; // Convert to accelerated in-game time
+
+            // Calculate in-game hours and minutes
+            let totalInGameMinutes = (startHour * 60 + startMinute + acceleratedTimeInMinutes) % (24 * 60);
+            let inGameHours = Math.floor(totalInGameMinutes / 60);
+            let inGameMinutes = Math.floor(totalInGameMinutes % 60);
+
+            let inGameDay = Math.floor((startHour * 60 + startMinute + acceleratedTimeInMinutes) / (24 * 60));
+
+            // Update moon phase when in-game day changes
+            if (previousInGameDay !== null && inGameDay !== previousInGameDay) {
+                currentMoonPhaseIndex = (currentMoonPhaseIndex + 1) % moonPhases.length;
+            }
+            previousInGameDay = inGameDay;
+
+            document.getElementById("output").innerHTML = 
+                "In-game Time: " + inGameHours.toString().padStart(2, '0') + ":" + inGameMinutes.toString().padStart(2, '0') +
+                "<br>Moon Phase: " + moonPhases[currentMoonPhaseIndex];
+        }
+    </script>
+</body>
+</html>

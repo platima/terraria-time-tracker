@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<!-- Version 4 aka v1.3 -->
+<html>
+<head>
+	<title>Terraria Tracker</title>
+	<style>
+		body {
+			font-family: 'Arial', sans-serif;
+			background-color: #0a2e36; /* Dark background */
+			color: #c2c5aa; /* Light text color */
+			text-align: center;
+		}
+		.container {
+			padding: 20px;
+			width: 600px;
+			margin: auto;
+			background-color: #12414f; /* Slightly lighter background for the container */
+			border-radius: 10px;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+		}
+		label, input, select, button {
+			display: block;
+			margin: 10px auto;
+			font-size: 16px;
+		}
+		input, select, button {
+			padding: 5px;
+			border: none;
+			border-radius: 5px;
+		}
+		button {
+			color: #0a2e36;
+			background-color: #8fbc8f; /* Green button */
+			cursor: pointer;
+		}
+		button:hover {
+			background-color: #7aac7e;
+		}
+		#output {
+			margin-top: 20px;
+			background-color: rgba(0, 0, 0, 0.2);
+			border-radius: 5px;
+			font-size: 1.4em;
+		}
+		.time-display {
+			margin-top: 20px;
+			height: 100px;
+			border-radius: 5px;
+			color: white;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			font-size: 20px;
+		}
+		.moon-phase-icon {
+			width: 50px;
+			height: 50px;
+			border-radius: 50%;
+			margin-left: 10px;
+		}
+		.moon-phase-icon img {
+			width: 100%;
+			margin: 0;
+			padding: 0;
+			border-radius: 25px;
+			border: 0px;
+			background-color: #eee;
+		}
+		button {
+			display: inline;
+		}
+		.flex-container {
+				display: flex;
+				justify-content: space-between; /* Adjust this as needed */
+		}
+
+		.input-group {
+				flex: 1; /* Allows each child to grow and take up equal space */
+				margin-right: 10px; /* Add some spacing between the divs, adjust as needed */
+		}
+
+		.input-group#output strong {
+			padding-left: 20px;
+			padding-right: 10px;
+		}
+
+		/* Specific styles for the first and second divs */
+		.flex-container > .input-group:first-child {
+				flex: 0 0 66%; /* Takes up 66% of the container's width */
+		}
+
+		.flex-container > .input-group:last-child {
+				flex: 0 0 33%; /* Takes up 33% of the container's width */
+				margin-right: 0; /* Remove margin from the last element */
+		}
+		.input-group {
+				display: flex;
+				align-items: center;
+				margin-bottom: 4px; /* Space between each input group */
+		}
+
+		.input-group label {
+   			margin-right: 10px; /* Space between label and input */
+				width: 170px; /* Adjust as needed */
+		}
+
+		.input-group input, .input-group select {
+				flex-grow: 1; /* Allows input/select to take up remaining space */
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h2>Terraria Time Tracker</h2>
+		<div class="input-group">
+			<label for="startHour">Start Hour (0-23):</label>
+			<input type="number" id="startHour" min="0" value="10" max="23">
+		</div>
+
+		<div class="input-group">
+				<label for="startMinute">Start Minute (0-59):</label>
+				<input type="number" id="startMinute" min="0" max="59" value="0">
+		</div>
+
+		<div class="input-group">
+				<label for="moonPhase">Starting Moon Phase:</label>
+				<select id="moonPhase">
+					<option value="0">New Moon</option>
+					<option value="1">Waxing Crescent</option>
+					<option value="2">First Quarter</option>
+					<option value="3">Waxing Gibbous</option>
+					<option value="4">Full Moon</option>
+					<option value="5">Waning Gibbous</option>
+					<option value="6">Last Quarter</option>
+					<option value="7">Waning Crescent</option>
+				</select>
+		</div>
+
+		<button onclick="startTracking()" id="trackingButton">Start Tracking</button> <button onclick="updateMoonIndex()">Update Moon</button> <button onclick="swapAMPM()">Swap AM/PM</button>
+		<div class="flex-container">
+				<div class="input-group" id="output">Enter a time and moon phase above, then hit 'Start Tracking'</div>
+				<div class="input-group time-display" id="timeDisplay">
+					<div class="moon-phase-icon" id="moonPhaseIcon">
+							<img src="SVGs/Moon_New.svg" alt="Moon Phase" />
+					</div>
+				</div>
+		</div>
+
+	</div>
+
+	<script>
+		let startHour, startMinute, startTime;
+		let moonPhases = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
+		let currentMoonPhaseIndex;
+                let moonPhaseUpdatedToday;
+		let previousInGameDay;
+
+		function swapAMPM() {
+			startTime = startTime -= 720000;
+			updateDateTime();
+		}
+
+		function updateMoonIndex() {
+			currentMoonPhaseIndex = parseInt(document.getElementById("moonPhase").value);
+			updateDateTime();
+		}
+
+		function startTracking() {
+			startHour = parseInt(document.getElementById("startHour").value);
+			startMinute = parseInt(document.getElementById("startMinute").value);
+
+			if(isNaN(startHour) || startHour < 0 || startHour > 23 ||
+				isNaN(startMinute) || startMinute < 0 || startMinute > 59) {
+				alert("Please enter valid hour (0-23) and minute (0-59).");
+				return;
+			}
+
+			startTime = new Date();
+			previousInGameDay = null;
+                        moonPhaseUpdatedToday = false;
+			document.getElementById("trackingButton").innerHTML = "Update Tracking";
+
+			updateMoonIndex();
+			updateDateTime(); // Update immediately
+			setInterval(updateDateTime, 1000); // Then update every real-time second
+		}
+
+		function updateDateTime() {
+			let currentTime = new Date();
+			let elapsedTime = currentTime - startTime; // Elapsed real time in milliseconds
+			let acceleratedTimeInMinutes = (elapsedTime / 1000 / 60) * 60; // Convert to accelerated in-game time
+
+			// Calculate in-game hours and minutes
+			let totalInGameMinutes = (startHour * 60 + startMinute + acceleratedTimeInMinutes) % (24 * 60);
+			let inGameHours = Math.floor(totalInGameMinutes / 60);
+			let inGameMinutes = Math.floor(totalInGameMinutes % 60);
+
+                        let inGameDay = Math.floor((startHour * 60 + startMinute + acceleratedTimeInMinutes) / (24 * 60));
+                        if(previousInGameDay !== null && inGameDay !== previousInGameDay) {
+                            // Reset moon phase update flag when a new day starts
+                            moonPhaseUpdatedToday = false;
+                        }
+
+                        if (!moonPhaseUpdatedToday && inGameHours >= 12) {
+                            currentMoonPhaseIndex = (currentMoonPhaseIndex + 1) % moonPhases.length;
+                            moonPhaseUpdatedToday = true; // Set flag to true after updating
+                        }
+                        previousInGameDay = inGameDay;
+
+
+			document.getElementById("output").innerHTML = 
+				"<strong>Time:</strong> " + inGameHours.toString().padStart(2, '0') + ":" + inGameMinutes.toString().padStart(2, '0') +
+				"<br/><strong>Moon:</strong> " + moonPhases[currentMoonPhaseIndex];
+
+			// Update time of day display TO DO
+                        /*
+			let timeDisplay = document.getElementById("timeDisplay");
+			if(inGameHours >= 6 && inGameHours < 18) {
+				// Daytime
+				timeDisplay.style.backgroundColor = 'skyblue';
+			} else {
+				// Nighttime
+				timeDisplay.style.backgroundColor = 'darkblue';
+			} */
+
+			let moonPhaseIcon = document.getElementById("moonPhaseIcon").querySelector('img');
+			if(moonPhaseIcon.src != getMoonPhaseIconPath(currentMoonPhaseIndex)) {
+                                // Only update src if it changes to prevent the files being called every second - in case of online hosting etc
+				moonPhaseIcon.src = "SVGs/" + getMoonPhaseIconPath(currentMoonPhaseIndex);
+			}
+			moonPhaseIcon.alt = moonPhases[currentMoonPhaseIndex];
+		}
+
+		function getMoonPhaseIconPath(index) {
+			// Replace with the paths to your downloaded SVG icons
+			let paths = [
+				'Moon_New.svg',
+				'Moon_Waxing_Crescent.svg',
+				'Moon_First_Quarter.svg',
+				'Moon_Waxing_Gibbous.svg',
+				'Moon_Full.svg',
+				'Moon_Waning_Gibbous.svg',
+				'Moon_Last_Quarter.svg',
+				'Moon_Waning_Crescent.svg',
+			];
+			return paths[index];
+		}
+	</script>
+</body>
+</html>
