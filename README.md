@@ -4,7 +4,7 @@ SVG files are from Wikipedia
 
 I am keeping old versions too... because I did not initially develop with any repo.
 
-Running at https://platima.github.io/terraria
+Live at https://platima.github.io/terraria-time-tracker/
 
 ## Current Features
 * Track the progression of time
