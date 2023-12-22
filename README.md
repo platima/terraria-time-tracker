@@ -1,5 +1,9 @@
 # Terraria Time Tracker
 
+SVG files are from Wikipedia
+
+I am keeping old versions too... because I did not initially develop with any repo.
+
 ## Current Features
 * Track the progression of time
 * Track the moon phases
